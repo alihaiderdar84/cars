@@ -1,14 +1,18 @@
-# Car   CLI tool
+# Car Rental CLI System
 
-A simple Car rental system 
+A simple CLI-based car rental system.
 
-## Commands 
+---
 
-cars list
-cars rent <id>
-cars return <id>
+## Commands
+
+```bash
+car list
+car rent <id>
+car return <id>
 
 ## setup
 
+```bash
 npm install
 npm link
