@@ -10,8 +10,11 @@ A simple CLI-based car rental system.
 car list
 car rent <id>
 car return <id>
+```
 
 ## setup
 
+```bash
 npm install
 npm link
+```
