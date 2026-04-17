@@ -13,6 +13,5 @@ car return <id>
 
 ## setup
 
-```bash
 npm install
 npm link
