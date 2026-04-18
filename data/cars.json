@@ -3,12 +3,12 @@
     {
       "name": "bently",
       "id": 1,
-      "available": true
+      "available": false
     },
     {
       "name": "wraith",
       "id": 2,
-      "available": false
+      "available": true
     },
     {
       "name": "phantom",

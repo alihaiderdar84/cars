@@ -1,64 +1,70 @@
 #!/usr/bin/env node
 import fs from "fs/promises";
+import path from "path";
+import readline from "readline";
+
+const carsPath = path.join(process.cwd(), "data", "cars.json");
 
 const getCars = async () => {
-    return JSON.parse(await fs.readFile("./cars.json", "utf-8"));
+    return JSON.parse(await fs.readFile(carsPath, "utf-8"));
 }
 
 const saveCars = async cars => {
-    await fs.writeFile("./cars.json", JSON.stringify(cars, null, 2));
+    await fs.writeFile(carsPath, JSON.stringify(cars, null, 2));
 }
 
-const data = await getCars();
-const cars = data.cars;
+const commands = new Map();
 
-const listCars = () => {
-    for (const car of cars) {
-        console.log(`${car.available ? "Available: " : "Rented: "} ${car.name} Id: ${car.id}\n`)
-    }
-}
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+})
 
-const rentCar = async id => {
-    if (!id) {
-        console.log("please provide an id");
+const ask = () => {
+    rl.question("> ", async input => {
+    const [cmd, arg] = input.trim().split(/\s+/);
+    
+    if (cmd === "exit") {
+        rl.close();
         return;
     }
-    const car = cars.find(car => car.id === Number(id));
-    if (!car) {
-        console.log("car not found");
-        return
-    }
-    if(car.available) car.available = false; else console.log("Car is not available");
-    await saveCars({ cars });
+    await exec(cmd, arg);
+    ask();
+});
 }
 
-const returnCar = async id => {
-    if (!id) {
-        console.log("please provide an id");
+const loadCommands = async () => {
+    const commandsPath = path.join(process.cwd(), "commands");
+    const files = await fs.readdir(commandsPath);
+    
+    for (const file of files) {
+        try {
+            const command = await import(path.join(commandsPath, file));
+            commands.set(command.default.name, command.default);
+        } catch (err) {
+            console.error(`Failed to load ${file}: ${err}`)
+        }
+
+
+    }
+    
+}
+
+const exec = async (cmd, arg) => {
+    if(!commands.has(cmd)) {
+        console.log("Please enter a valid command");
         return;
     }
-    const car = cars.find(car => car.id === Number(id));
-    if (!car) {
-        console.log("car not found");
-        return
-    }
-    if(!car.available) car.available = true; else console.log("Car is not rented");
-    await saveCars({ cars });
+
+    const command = commands.get(cmd);
+    await command.execute(arg);
 }
 
-const [,, cmd, id] = process.argv;
-
-
-switch(cmd) {
-    case "list":
-        listCars();
-        break;
-    case "rent":
-        rentCar(id);
-        break;
-    case "return":
-        returnCar(id);
-        break;
-    default:
-        console.log("Invalid Command");
+const main = async () => {
+    await loadCommands();
+    ask();
 }
+
+main();
+
+export { getCars, saveCars }
