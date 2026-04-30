@@ -3,12 +3,12 @@
     {
       "name": "bently",
       "id": 1,
-      "available": false
+      "available": true
     },
     {
       "name": "wraith",
       "id": 2,
-      "available": true
+      "available": false
     },
     {
       "name": "phantom",
@@ -23,7 +23,7 @@
     {
       "name": "porche",
       "id": 5,
-      "available": true
+      "available": false
     }
   ]
 }
