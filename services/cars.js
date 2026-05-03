@@ -1,14 +1,13 @@
-import path from "path";
-import fs from "fs/promises";
-
-const carsPath = path.join(process.cwd(), "data", "cars.json");
+import { db } from "../utils/db.js";
+import AppError from "../utils/AppError.js";
 
 const getCars = async () => {
-  return JSON.parse(await fs.readFile(carsPath, "utf-8"));
-};
+  const cars = await db.all("SELECT * FROM cars");
 
-const saveCars = async (cars) => {
-  await fs.writeFile(carsPath, JSON.stringify(cars, null, 2));
+  return cars.map((car) => ({
+    ...car,
+    available: Boolean(car.available),
+  }));
 };
 
 const listCars = async () => {
@@ -18,15 +17,19 @@ const listCars = async () => {
 const getCar = async (id) => {
   id = Number(id);
   if (!id || isNaN(id)) {
-    return { success: false, message: "Please provide a valid id" };
+    throw new AppError("Please provide a valid id", 400);
   }
 
-  const data = await getCars();
-  const car = data.find((car) => car.id === id);
+  let car = await db.get("SELECT * FROM cars WHERE id = ?", [id]);
 
   if (!car) {
-    return { success: false, message: "Car not found" };
+    throw new AppError("Car not found", 404);
   }
+
+  car = {
+    ...car,
+    available: Boolean(car.available),
+  };
 
   return { success: true, data: car };
 };
@@ -34,22 +37,20 @@ const getCar = async (id) => {
 const rentCar = async (id) => {
   id = Number(id);
   if (!id || isNaN(id)) {
-    return { success: false, message: "Please provide a valid id" };
+    throw new AppError("Please provide a valid id", 400);
   }
 
-  const data = await getCars();
-  const car = data.find((car) => car.id === id);
+  const car = await db.get("SELECT * FROM cars WHERE id = ?", [id]);
 
   if (!car) {
-    return { success: false, message: "Car not found" };
+    throw new AppError("Car not found", 404);
   }
 
   if (!car.available) {
-    return { success: false, message: "The car is not available" };
+    throw new AppError("The car is not available", 409);
   }
 
-  car.available = false;
-  await saveCars(data);
+  await db.run("UPDATE cars SET available = 0 WHERE id = ?", [id]);
 
   return { success: true, message: "Car rented" };
 };
@@ -57,23 +58,20 @@ const rentCar = async (id) => {
 const returnCar = async (id) => {
   id = Number(id);
   if (!id || isNaN(id)) {
-    return { success: false, message: "Please provide a valid id" };
+    throw new AppError("Please provide a valid id", 400);
   }
 
-  const data = await getCars();
-  const car = data.find((car) => car.id === id);
+  const car = await db.get("SELECT * FROM cars WHERE id = ?", [id]);
 
   if (!car) {
-    return { success: false, message: "Car not found" };
+    throw new AppError("Car not found", 404);
   }
 
   if (car.available) {
-    return { success: false, message: "The car is not rented" };
+    throw new AppError("The car is not rented", 409);
   }
 
-  car.available = true;
-  await saveCars(data);
-
+  await db.run("UPDATE cars SET available = 1 WHERE id = ?", [id]);
   return { success: true, message: "Car returned" };
 };
 

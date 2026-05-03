@@ -33,6 +33,8 @@ const ask = () => {
 });
 }
 
+
+
 const loadCommands = async () => {
     const commandsPath = path.join(process.cwd(), "commands");
     const files = await fs.readdir(commandsPath);

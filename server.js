@@ -11,30 +11,39 @@ app.get("/cars", async (req, res) => {
   res.status(200).json({ success: true, data: cars });
 });
 
-app.get("/cars/:id", async (req, res) => {
-  const car = await getCar(req.params.id);
-  if (!car.success) {
-    return res.status(404).json(car);
+app.get("/cars/:id", async (req, res, next) => {
+  try {
+    const car = await getCar(req.params.id);
+    res.status(200).json(car);
+  } catch (err) {
+    next(err);
   }
-  res.status(200).json(car);
 });
 
-app.post("/cars/rent", async (req, res) => {
-  const result = await rentCar(req.body.id);
-
-  if (!result.success) {
-    return res.status(400).json(result);
+app.post("/cars/rent", async (req, res, next) => {
+  try {
+    const result = await rentCar(req.body.id);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
   }
-
-  res.json(result);
 });
 
-app.post("/cars/return", async (req, res) => {
-  const result = await returnCar(req.body.id);
-  if (!result.success) {
-    return res.status(400).json(result);
+app.post("/cars/return", async (req, res, next) => {
+  try {
+    const result = await returnCar(req.body.id);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
   }
-  res.json(result);
+});
+
+app.use((err, req, res, next) => {
+  const status = err.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    message: err.message || "Internal server error",
+  });
 });
 
 app.listen(port, () => {
