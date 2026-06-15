@@ -1,8 +1,12 @@
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const dbPath = path.join(process.cwd(), "data", "cars.db");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dbPath = path.join(__dirname, "..", "data", "cars.db");
 
 export const db = await open({
   filename: dbPath,

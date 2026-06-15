@@ -1,32 +1,40 @@
 #!/usr/bin/env node
+import env from "dotenv";
 import fs from "fs/promises";
 import path from "path";
-import readline from "readline";
-import { server } from "./server.js";
+import { fileURLToPath } from "url";
+import { createInterface } from "readline/promises";
+import { stdin as input, stdout as output } from "process";
 
 const commands = new Map();
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+env.config({ path: path.join(__dirname, ".env"), quiet: true});
+
+const rl = createInterface({
+  input,
+  output,
 });
 
-const ask = () => {
-  rl.question("> ", async (input) => {
-    const [cmd, arg] = input.trim().split(/\s+/);
+const ask = async () => {
+  const input = await rl.question("> ");
 
-    if (cmd === "exit") {
-      server.close();
-      rl.close();
-      return;
-    }
-    await exec(cmd, arg);
-    ask();
-  });
+  const cmd = input.trim().split(/\s+/)[0];
+
+  if (cmd === "exit") {
+    server.close();
+    rl.close();
+    return;
+  }
+
+  await exec(cmd);
+  await ask();
 };
 
 const loadCommands = async () => {
-  const commandsPath = path.join(process.cwd(), "commands");
+  const commandsPath = path.join(__dirname, "commands");
   const files = await fs.readdir(commandsPath);
 
   for (const file of files) {
@@ -39,20 +47,20 @@ const loadCommands = async () => {
   }
 };
 
-const exec = async (cmd, arg) => {
+const exec = async (cmd) => {
+  
   if (!commands.has(cmd)) {
     console.log("Please enter a valid command");
     return;
   }
 
   const command = commands.get(cmd);
-  await command.execute(arg);
+  await command.execute(rl);
 };
 
 const main = async () => {
-  server;
   await loadCommands();
-  ask();
+  await ask();
 };
 
 main();
